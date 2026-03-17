@@ -6,12 +6,12 @@ A hands-on experiment exploring the `grep` and `fgrep` commands on a Raspberry P
 
 ## 🖥️ Environment
 
-|Property             |Value       |
-|---------------------|------------|
-|**Platform**         |Raspberry Pi|
-|**Shell**            |Bash        |
-|**Working Directory**|`~/grep_lab`|
-|**Test File**        |`sample.txt`|
+|Property             |Value          |
+|---------------------|---------------|
+|**Platform**         |Raspberry Pi OS|
+|**Shell**            |Bash           |
+|**Working Directory**|`~/grep_lab`   |
+|**Test File**        |`sample.txt`   |
 
 -----
 
