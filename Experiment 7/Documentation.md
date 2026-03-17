@@ -1,179 +1,282 @@
-# 🔍 Experiment 5: Linux `grep` Command Lab
+# 👥 Experiment 7: Linux User & Group Management Lab
 
-A hands-on experiment exploring the `grep` and `fgrep` commands on a Raspberry Pi running Linux. This lab demonstrates pattern searching, case-insensitive matching, line numbering, inverted search, and recursive file searching.
+A hands-on experiment exploring user creation, group management, directory permissions, and file ownership on a Raspberry Pi running Linux. This lab demonstrates how to manage users, assign groups, configure shared directories, and set file ownership using standard Linux commands.
 
 -----
 
 ## 🖥️ Environment
 
-|Property             |Value          |
-|---------------------|---------------|
-|**Platform**         |Raspberry Pi OS|
-|**Shell**            |Bash           |
-|**Working Directory**|`~/grep_lab`   |
-|**Test File**        |`sample.txt`   |
-
------
-
-## 📄 Sample File Contents
-
-The file `sample.txt` was created using `nano` and contains the following lines:
-
-```
-Linux is powerful
-Linux is secure
-Bash scripting is useful
-Cyber Security uses Linux
-```
+|Property              |Value       |
+|----------------------|------------|
+|**Platform**          |Raspberry Pi OS|
+|**Shell**             |Bash        |
+|**Primary User**      |`sk`        |
+|**Test User Created** |`testuser`  |
+|**Test Group Created**|`testgroup` |
 
 -----
 
 ## 🧪 Commands & Observations
 
-### 1. Basic Search with `grep`
+### 1. Create a New User
 
 ```bash
-grep Linux sample.txt
+sudo useradd testuser
 ```
 
-**Output:**
-
-```
-Linux is powerful
-Linux is secure
-Cyber Security uses Linux
-```
-
-> Returns all lines containing the exact string `Linux` (case-sensitive). The matching word is highlighted in the terminal output.
+> Creates a new system user named `testuser`. The `sudo` prefix is required as user management needs root privileges.
 
 -----
 
-### 2. Case-Insensitive Search with `grep -i`
+### 2. Set Password for New User
 
 ```bash
-grep -i linux sample.txt
+sudo passwd testuser
 ```
 
 **Output:**
 
 ```
-Linux is powerful
-Linux is secure
-Cyber Security uses Linux
+New password:
+Retype new password:
+passwd: password updated successfully
 ```
 
-> The `-i` flag makes the search case-insensitive. Both `linux` and `Linux` are matched, returning the same results here since the file only uses `Linux`.
+> Sets a password for `testuser`. The terminal prompts for password entry twice for confirmation.
 
 -----
 
-### 3. Display Line Numbers with `grep -n`
+### 3. Verify User Identity
 
 ```bash
-grep -n Linux sample.txt
+id testuser
 ```
 
 **Output:**
 
 ```
-1:Linux is powerful
-2:Linux is secure
-4:Cyber Security uses Linux
+uid=1001(testuser) gid=1001(testuser) groups=1001(testuser)
 ```
 
-> The `-n` flag prepends each matching line with its line number. Notice line 3 (`Bash scripting is useful`) is skipped as it does not contain `Linux`.
+> Displays the User ID (`uid`), primary Group ID (`gid`), and all group memberships for `testuser`. The system auto-assigned `uid=1001` and `gid=1001`.
 
 -----
 
-### 4. Inverted Search with `grep -v`
+### 4. Create a New Group
 
 ```bash
-grep -v Linux sample.txt
+sudo groupadd testgroup
 ```
 
-**Output:**
-
-```
-Bash scripting is useful
-```
-
-> The `-v` flag inverts the match — it returns all lines that do **not** contain the pattern `Linux`.
+> Creates a new group named `testgroup`. Groups are used to manage shared permissions across multiple users.
 
 -----
 
-### 5. Fixed String Search with `fgrep`
+### 5. Add User to Group
 
 ```bash
-fgrep "Bash scripting" sample.txt
+sudo usermod -aG testgroup testuser
 ```
 
-**Output:**
-
-```
-Bash scripting is useful
-```
-
-> `fgrep` (fixed-string grep) searches for a literal string without interpreting regex special characters. Useful when the search pattern contains characters like `.`, `*`, or `?`.
+> The `-aG` flag **appends** `testuser` to `testgroup` without removing them from existing groups. Omitting `-a` would replace all current group memberships.
 
 -----
 
-### 6. Recursive Search with `grep -r`
+### 6. Verify Group Membership
 
 ```bash
-grep -r Linux
+groups testuser
 ```
 
 **Output:**
 
 ```
-sample.txt:Linux is powerful
-sample.txt:Linux is secure
-sample.txt:Cyber Security uses Linux
+testuser : testuser testgroup
 ```
 
-> The `-r` flag searches recursively through all files in the current directory. The output includes the filename prefix (`sample.txt:`) before each matching line.
+> Confirms that `testuser` now belongs to both their default group (`testuser`) and the newly added `testgroup`.
+
+-----
+
+### 7. Create a Shared Directory
+
+```bash
+mkdir shared_dir
+```
+
+> Creates a new directory named `shared_dir` in the current working directory.
+
+-----
+
+### 8. Assign Group Ownership to Directory
+
+```bash
+sudo chgrp testgroup shared_dir
+```
+
+> Changes the group ownership of `shared_dir` to `testgroup`, allowing all group members to access it based on group permissions.
+
+-----
+
+### 9. Set Directory Permissions
+
+```bash
+sudo chmod 770 shared_dir
+```
+
+> Sets permissions so the **owner** and **group** have full read, write, and execute access (`rwx`), while **others** have no access (`---`).
+
+|Entity|Permission|Meaning    |
+|------|----------|-----------|
+|Owner |`rwx` (7) |Full access|
+|Group |`rwx` (7) |Full access|
+|Others|`---` (0) |No access  |
+
+-----
+
+### 10. Set the Sticky Bit
+
+```bash
+sudo chmod +t shared_dir
+```
+
+> The sticky bit (`+t`) prevents users from deleting or renaming files owned by others inside the shared directory — even if they have write permission. Commonly used on shared directories like `/tmp`.
+
+-----
+
+### 11. Verify Directory Permissions
+
+```bash
+ls -l
+```
+
+**Relevant Output (first listing):**
+
+```
+drwxrwx--T 2 sk testgroup 4096 Feb 20 13:58 shared_dir
+```
+
+> The `T` at the end of the permission string confirms the sticky bit is set. The group is now `testgroup` and permissions show `770`.
+
+-----
+
+### 12. Assign File Ownership (with Error)
+
+```bash
+sudo chown testuser:testgroup shared_file.txt
+```
+
+**Output:**
+
+```
+chown: cannot access 'shared_file.txt': No such file or directory
+```
+
+> Failed because `shared_file.txt` did not exist yet. The file must be created before ownership can be assigned.
+
+-----
+
+### 13. Create the File
+
+```bash
+touch shared_file.txt
+```
+
+> Creates an empty file named `shared_file.txt` in the current directory.
+
+-----
+
+### 14. Assign File Ownership (Successful)
+
+```bash
+sudo chown testuser:testgroup shared_file.txt
+```
+
+> Successfully sets the **owner** of `shared_file.txt` to `testuser` and the **group** to `testgroup`.
+
+-----
+
+### 15. Final Directory Listing
+
+```bash
+ls -l
+```
+
+**Relevant Output (final listing):**
+
+```
+drwxrwx--T 2 sk        testgroup  4096 Feb 20 13:58 shared_dir
+-rw-rw-r-- 1 testuser  testgroup     0 Feb 20 14:02 shared_file.txt
+```
+
+> Confirms:
+> 
+> - `shared_dir` is owned by `sk`, group `testgroup`, with `770` permissions and sticky bit (`T`).
+> - `shared_file.txt` is owned by `testuser`, group `testgroup`, with `664` permissions (`rw-rw-r--`).
 
 -----
 
 ## 📋 Command Summary
 
-|Command                            |Flag            |Description                           |
-|-----------------------------------|----------------|--------------------------------------|
-|`grep Linux sample.txt`            |*(none)*        |Basic case-sensitive search           |
-|`grep -i linux sample.txt`         |`-i`            |Case-insensitive search               |
-|`grep -n Linux sample.txt`         |`-n`            |Show line numbers with matches        |
-|`grep -v Linux sample.txt`         |`-v`            |Invert match (show non-matching lines)|
-|`fgrep "Bash scripting" sample.txt`|*(fixed string)*|Literal string search, no regex       |
-|`grep -r Linux`                    |`-r`            |Recursive search across all files     |
+|Command                                        |Description                                      |
+|-----------------------------------------------|-------------------------------------------------|
+|`sudo useradd testuser`                        |Create a new user                                |
+|`sudo passwd testuser`                         |Set password for a user                          |
+|`id testuser`                                  |Display user ID and group memberships            |
+|`sudo groupadd testgroup`                      |Create a new group                               |
+|`sudo usermod -aG testgroup testuser`          |Append user to a group                           |
+|`groups testuser`                              |List all groups a user belongs to                |
+|`mkdir shared_dir`                             |Create a new directory                           |
+|`sudo chgrp testgroup shared_dir`              |Change group ownership of a directory            |
+|`sudo chmod 770 shared_dir`                    |Set owner/group full access, block others        |
+|`sudo chmod +t shared_dir`                     |Set sticky bit on directory                      |
+|`touch shared_file.txt`                        |Create an empty file                             |
+|`sudo chown testuser:testgroup shared_file.txt`|Set file owner and group                         |
+|`ls -l`                                        |List files with permissions and ownership details|
 
 -----
 
 ## ⚠️ Errors Encountered
 
 ```bash
-cat file1.txt
-# cat: file1.txt: No such file or directory
+sudo chown testuser:testgroup shared_file.txt
+# chown: cannot access 'shared_file.txt': No such file or directory
 ```
 
-> Attempted to read a file `file1.txt` that did not exist in the directory. This is a common error when referencing incorrect filenames.
+> Attempted to change ownership of a file that had not been created yet. Resolved by first creating the file with `touch shared_file.txt`, then re-running the `chown` command successfully.
 
 -----
 
 ## 🔑 Key Takeaways
 
-- `grep` is a powerful tool for searching text patterns within files.
-- The `-i` flag enables case-insensitive matching.
-- The `-n` flag is useful for identifying exact line locations of matches.
-- The `-v` flag is helpful for filtering out unwanted lines.
-- `fgrep` is preferred over `grep` when searching for literal strings containing special characters.
-- The `-r` flag allows searching across multiple files in a directory tree.
+- `useradd` and `passwd` are used together to create and secure new user accounts.
+- `usermod -aG` safely appends a user to a group without removing existing memberships.
+- `chgrp` changes group ownership; `chown` changes both user and group ownership.
+- `chmod 770` restricts directory access to the owner and group only.
+- The **sticky bit** (`+t`) protects files in shared directories from deletion by non-owners.
+- Always create a file before attempting to assign ownership to it.
 
 -----
 
-## 📁 Lab Structure
+## 📁 Lab Directory Structure
 
 ```
-~/grep_lab/
-└── sample.txt
+~/
+├── shared_dir/          # drwxrwx--T (owner: sk, group: testgroup)
+└── shared_file.txt      # -rw-rw-r-- (owner: testuser, group: testgroup)
+```
+
+-----
+
+## 🔐 Permission Reference
+
+```
+d rwx rwx --- T
+│  │   │   │  └── Sticky bit (T = set, no execute for others)
+│  │   │   └───── Others: no permission
+│  │   └───────── Group: read, write, execute
+│  └───────────── Owner: read, write, execute
+└──────────────── d = directory, - = file
 ```
 
 -----
