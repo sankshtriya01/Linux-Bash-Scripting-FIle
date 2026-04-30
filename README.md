@@ -111,6 +111,5 @@ chmod +x *.sh
 
 ## 📝 Notes
 
-- Experiments 6 and 9 are not included in this repository.
 - Each experiment folder contains a `README.md` with theory, procedure, commands, outputs, and screenshots.
-- All scripts are tested and verified on KDE Neon running inside VMware Workstation.
+- All scripts are tested and verified on KDE Neon running inside VMware Workstation or in Raspberry Pi OS inside Raspberry Pi 4B.
